@@ -3,12 +3,10 @@
 import time
 import uuid
 from pathlib import Path
-from typing import List, Optional
 
 import aiofiles
 import structlog
 from fastapi import APIRouter, Depends, File, Form, HTTPException, Request, UploadFile
-from fastapi.responses import JSONResponse
 
 from app.core.config import settings
 from app.core.exceptions import FileTooLargeError, UnsupportedFileTypeError
@@ -34,13 +32,13 @@ def get_vector_service(request: Request) -> VectorStoreService:
 @router.post("/upload", response_model=DocumentUploadResponse, status_code=201)
 async def upload_document(
     file: UploadFile = File(...),
-    title: Optional[str] = Form(None),
-    description: Optional[str] = Form(None),
+    title: str | None = Form(None),
+    description: str | None = Form(None),
     vector_service: VectorStoreService = Depends(get_vector_service),
 ):
     """
     Upload and index a document.
-    
+
     Supports: PDF, DOCX, TXT, MD, CSV, HTML (max 50MB).
     """
     # Validate extension

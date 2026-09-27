@@ -4,13 +4,11 @@ Wires together: vector search → LLM generation → response formatting.
 """
 
 import time
-from typing import AsyncGenerator, List, Optional, Tuple
+from collections.abc import AsyncGenerator
 
 import structlog
-from langchain.schema import Document
 
 from app.core.config import settings
-from app.core.exceptions import NoDocumentsIndexedError
 from app.models.schemas import QueryRequest, QueryResponse, SourceChunk
 from app.services.llm_service import LLMService
 from app.services.session_service import get_session_service
@@ -100,9 +98,7 @@ class RAGPipeline:
             processing_time_ms=round(elapsed, 2),
         )
 
-    async def stream_query(
-        self, request: QueryRequest
-    ) -> AsyncGenerator[str, None]:
+    async def stream_query(self, request: QueryRequest) -> AsyncGenerator[str, None]:
         """Streaming RAG pipeline."""
         session_id = self.session_service.get_or_create(request.session_id)
         history = self.session_service.get_history(session_id)

@@ -4,8 +4,8 @@ LLM service using Ollama with phi3 model, optimized for low-RAM environments.
 
 import asyncio
 import time
+from collections.abc import AsyncGenerator
 from functools import partial
-from typing import AsyncGenerator, List, Optional, Tuple
 
 import structlog
 from langchain.schema import Document
@@ -19,8 +19,8 @@ logger = structlog.get_logger(__name__)
 # --- Tuning constants ---
 # Keep top_k low in your retriever (recommended: 2-3). More docs = more tokens = slower.
 # Keep chunk_size low in your splitter (recommended: 300-400 chars, overlap: 50).
-CONTEXT_CHAR_LIMIT = 1200   # Hard cap on context fed to the model (~300 tokens)
-HISTORY_TURNS = 1           # Only pass the last 1 exchange to save tokens
+CONTEXT_CHAR_LIMIT = 1200  # Hard cap on context fed to the model (~300 tokens)
+HISTORY_TURNS = 1  # Only pass the last 1 exchange to save tokens
 
 # Compact prompt — every extra word costs latency on low RAM
 RAG_SYSTEM_PROMPT = """Use only the context below to answer the question. Be brief.
@@ -67,7 +67,7 @@ class LLMService:
         except Exception as e:
             raise LLMError(f"Ollama initialization failed: {e}")
 
-    def _format_context(self, docs_with_scores: List[Tuple[Document, float]]) -> str:
+    def _format_context(self, docs_with_scores: list[tuple[Document, float]]) -> str:
         """
         Format retrieved docs into a compact context string.
         Truncates to CONTEXT_CHAR_LIMIT to prevent oversized prompts.
@@ -86,30 +86,26 @@ class LLMService:
 
         return "\n\n".join(parts)
 
-    def _format_history(self, history: List[dict]) -> str:
+    def _format_history(self, history: list[dict]) -> str:
         """
         Return only the last HISTORY_TURNS exchanges to keep the prompt short.
         Each turn = one user message + one assistant message = 2 list items.
         """
         if not history:
             return ""
-        recent = history[-(HISTORY_TURNS * 2):]
-        return "\n".join(
-            f"{h['role'].capitalize()}: {h['content']}" for h in recent
-        )
+        recent = history[-(HISTORY_TURNS * 2) :]
+        return "\n".join(f"{h['role'].capitalize()}: {h['content']}" for h in recent)
 
     def _build_prompt(
         self,
         question: str,
-        docs_with_scores: List[Tuple[Document, float]],
-        history: Optional[List[dict]],
+        docs_with_scores: list[tuple[Document, float]],
+        history: list[dict] | None,
     ) -> str:
         context = self._format_context(docs_with_scores)
         chat_history = self._format_history(history or [])
         history_block = (
-            HISTORY_BLOCK_TEMPLATE.format(chat_history=chat_history)
-            if chat_history
-            else ""
+            HISTORY_BLOCK_TEMPLATE.format(chat_history=chat_history) if chat_history else ""
         )
         return RAG_SYSTEM_PROMPT.format(
             context=context,
@@ -120,9 +116,9 @@ class LLMService:
     async def generate_answer(
         self,
         question: str,
-        docs_with_scores: List[Tuple[Document, float]],
-        history: Optional[List[dict]] = None,
-    ) -> Tuple[str, dict]:
+        docs_with_scores: list[tuple[Document, float]],
+        history: list[dict] | None = None,
+    ) -> tuple[str, dict]:
         """Generate a complete answer. Runs Ollama in a thread to keep FastAPI non-blocking."""
         if not self._llm:
             raise LLMError("LLM not initialized. Call initialize() first.")
@@ -136,9 +132,7 @@ class LLMService:
             start = time.time()
 
             loop = asyncio.get_event_loop()
-            answer = await loop.run_in_executor(
-                None, partial(self._llm.invoke, prompt)
-            )
+            answer = await loop.run_in_executor(None, partial(self._llm.invoke, prompt))
 
             elapsed_ms = round((time.time() - start) * 1000, 2)
             logger.info("llm_answered", time_ms=elapsed_ms, model=self._model_name)
@@ -155,8 +149,8 @@ class LLMService:
     async def stream_answer(
         self,
         question: str,
-        docs_with_scores: List[Tuple[Document, float]],
-        history: Optional[List[dict]] = None,
+        docs_with_scores: list[tuple[Document, float]],
+        history: list[dict] | None = None,
     ) -> AsyncGenerator[str, None]:
         """
         Stream answer tokens as they are generated.

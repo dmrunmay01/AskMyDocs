@@ -8,7 +8,7 @@ import structlog
 
 def setup_logging(log_level: str = "INFO") -> None:
     """Configure structured logging for the application."""
-    
+
     shared_processors = [
         structlog.contextvars.merge_contextvars,
         structlog.stdlib.add_log_level,

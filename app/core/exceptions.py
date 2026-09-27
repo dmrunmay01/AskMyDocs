@@ -1,6 +1,6 @@
 """Custom application exceptions with HTTP status codes."""
 
-from typing import Any, Dict, Optional
+from typing import Any
 
 
 class AppException(Exception):
@@ -11,7 +11,7 @@ class AppException(Exception):
         message: str,
         status_code: int = 500,
         error_code: str = "INTERNAL_ERROR",
-        details: Optional[Dict[str, Any]] = None,
+        details: dict[str, Any] | None = None,
     ):
         self.message = message
         self.status_code = status_code

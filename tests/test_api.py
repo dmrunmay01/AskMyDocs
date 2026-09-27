@@ -3,14 +3,8 @@ Integration and unit tests for RAG Document Q&A API.
 Run: pytest tests/ -v --cov=app --cov-report=html
 """
 
-import io
-import json
-from pathlib import Path
-from unittest.mock import AsyncMock, MagicMock, patch
-
 import pytest
 from fastapi.testclient import TestClient
-from httpx import AsyncClient
 
 from app.main import app
 
@@ -139,6 +133,7 @@ class TestSessions:
 class TestDocumentProcessor:
     def test_clean_text(self):
         from app.services.document_processor import DocumentProcessor
+
         proc = DocumentProcessor()
         text = "Hello    world\n\n\n\nNew paragraph"
         result = proc._clean_text(text)
@@ -147,7 +142,9 @@ class TestDocumentProcessor:
 
     def test_deduplicate_chunks(self):
         from langchain.schema import Document
+
         from app.services.document_processor import DocumentProcessor
+
         proc = DocumentProcessor()
         chunks = [
             Document(page_content="Hello world", metadata={}),
@@ -159,7 +156,9 @@ class TestDocumentProcessor:
 
     def test_enrich_metadata(self):
         from langchain.schema import Document
+
         from app.services.document_processor import DocumentProcessor
+
         proc = DocumentProcessor()
         chunks = [Document(page_content="test", metadata={})]
         enriched = proc._enrich_metadata(chunks, "doc123", "test.txt", {"author": "test"})
@@ -173,24 +172,30 @@ class TestDocumentProcessor:
 class TestSchemas:
     def test_query_request_validation(self):
         from app.models.schemas import QueryRequest
+
         req = QueryRequest(question="What is RAG?", top_k=5)
         assert req.question == "What is RAG?"
         assert req.top_k == 5
 
     def test_query_request_strips_whitespace(self):
         from app.models.schemas import QueryRequest
+
         req = QueryRequest(question="  hello  ")
         assert req.question == "hello"
 
     def test_query_request_too_short(self):
         from pydantic import ValidationError
+
         from app.models.schemas import QueryRequest
+
         with pytest.raises(ValidationError):
             QueryRequest(question="hi")
 
     def test_query_request_top_k_bounds(self):
         from pydantic import ValidationError
+
         from app.models.schemas import QueryRequest
+
         with pytest.raises(ValidationError):
             QueryRequest(question="Valid question?", top_k=100)
 
@@ -199,6 +204,7 @@ class TestSchemas:
 class TestConfig:
     def test_settings_load(self):
         from app.core.config import settings
+
         assert settings.APP_NAME
         assert settings.CHUNK_SIZE > 0
         assert settings.CHUNK_OVERLAP < settings.CHUNK_SIZE
@@ -206,6 +212,7 @@ class TestConfig:
 
     def test_max_upload_bytes(self):
         from app.core.config import settings
+
         assert settings.max_upload_bytes == settings.MAX_UPLOAD_SIZE_MB * 1024 * 1024
 
 
@@ -213,16 +220,19 @@ class TestConfig:
 class TestExceptions:
     def test_document_not_found(self):
         from app.core.exceptions import DocumentNotFoundError
+
         exc = DocumentNotFoundError("abc123")
         assert exc.status_code == 404
         assert "abc123" in exc.message
 
     def test_unsupported_file_type(self):
         from app.core.exceptions import UnsupportedFileTypeError
+
         exc = UnsupportedFileTypeError(".xyz", [".pdf", ".txt"])
         assert exc.status_code == 415
 
     def test_file_too_large(self):
         from app.core.exceptions import FileTooLargeError
+
         exc = FileTooLargeError(55.0, 50)
         assert exc.status_code == 413

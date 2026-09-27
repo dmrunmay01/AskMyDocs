@@ -1,7 +1,6 @@
 """Health check endpoint."""
 
 import time
-from datetime import datetime
 
 import structlog
 from fastapi import APIRouter, Request

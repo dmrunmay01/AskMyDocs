@@ -5,8 +5,8 @@ Production-grade FastAPI application with LangChain + FAISS + HuggingFace
 
 import time
 import uuid
+from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
-from typing import AsyncGenerator
 
 import structlog
 from fastapi import FastAPI, Request
@@ -29,7 +29,7 @@ logger = structlog.get_logger(__name__)
 async def lifespan(app: FastAPI) -> AsyncGenerator:
     """Application lifespan manager - startup and shutdown."""
     logger.info("🚀 Starting RAG Document Q&A API", version=settings.APP_VERSION)
-    
+
     # Initialize vector store on startup
     vector_service = VectorStoreService()
     await vector_service.initialize()
@@ -40,10 +40,10 @@ async def lifespan(app: FastAPI) -> AsyncGenerator:
     llm_service = LLMService()
     await llm_service.initialize()
     app.state.llm_service = llm_service
-    
+
     logger.info("✅ Application ready", environment=settings.ENVIRONMENT)
     yield
-    
+
     # Graceful shutdown
     logger.info("🔻 Shutting down application")
     await vector_service.cleanup()
@@ -65,7 +65,7 @@ A production-grade Retrieval-Augmented Generation system that lets you:
 
 ### Architecture
 - **LangChain** for RAG orchestration
-- **FAISS** for fast vector similarity search  
+- **FAISS** for fast vector similarity search
 - **HuggingFace** sentence-transformers for embeddings
 - **Ollama** for local LLM inference (no API costs!)
 - **FastAPI** for async REST API
@@ -92,13 +92,13 @@ A production-grade Retrieval-Augmented Generation system that lets you:
         request_id = str(uuid.uuid4())
         request.state.request_id = request_id
         start_time = time.time()
-        
+
         response = await call_next(request)
-        
+
         process_time = (time.time() - start_time) * 1000
         response.headers["X-Request-ID"] = request_id
         response.headers["X-Process-Time"] = f"{process_time:.2f}ms"
-        
+
         logger.info(
             "request_completed",
             method=request.method,

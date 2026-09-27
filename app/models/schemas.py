@@ -2,8 +2,8 @@
 
 from datetime import datetime
 from enum import Enum
-from typing import Any, Dict, List, Optional
-from uuid import UUID, uuid4
+from typing import Any
+from uuid import uuid4
 
 from pydantic import BaseModel, Field, validator
 
@@ -19,10 +19,10 @@ class ChunkMetadata(BaseModel):
     doc_id: str
     filename: str
     chunk_index: int
-    page_number: Optional[int] = None
-    section: Optional[str] = None
-    char_start: Optional[int] = None
-    char_end: Optional[int] = None
+    page_number: int | None = None
+    section: str | None = None
+    char_start: int | None = None
+    char_end: int | None = None
 
 
 class DocumentMetadata(BaseModel):
@@ -33,10 +33,10 @@ class DocumentMetadata(BaseModel):
     file_type: str
     status: DocumentStatus = DocumentStatus.PENDING
     num_chunks: int = 0
-    num_pages: Optional[int] = None
+    num_pages: int | None = None
     uploaded_at: datetime = Field(default_factory=datetime.utcnow)
-    indexed_at: Optional[datetime] = None
-    metadata: Dict[str, Any] = Field(default_factory=dict)
+    indexed_at: datetime | None = None
+    metadata: dict[str, Any] = Field(default_factory=dict)
 
     class Config:
         use_enum_values = True
@@ -52,7 +52,7 @@ class DocumentUploadResponse(BaseModel):
 
 
 class DocumentListResponse(BaseModel):
-    documents: List[DocumentMetadata]
+    documents: list[DocumentMetadata]
     total: int
     page: int
     page_size: int
@@ -64,15 +64,15 @@ class SourceChunk(BaseModel):
     doc_id: str
     filename: str
     chunk_index: int
-    page_number: Optional[int] = None
-    metadata: Dict[str, Any] = Field(default_factory=dict)
+    page_number: int | None = None
+    metadata: dict[str, Any] = Field(default_factory=dict)
 
 
 class QueryRequest(BaseModel):
     question: str = Field(..., min_length=3, max_length=2000, description="Question to ask")
-    session_id: Optional[str] = Field(None, description="Session ID for conversation history")
+    session_id: str | None = Field(None, description="Session ID for conversation history")
     top_k: int = Field(default=5, ge=1, le=20, description="Number of chunks to retrieve")
-    doc_ids: Optional[List[str]] = Field(None, description="Filter to specific documents")
+    doc_ids: list[str] | None = Field(None, description="Filter to specific documents")
     use_mmr: bool = Field(default=True, description="Use Maximal Marginal Relevance for diversity")
     temperature: float = Field(default=0.1, ge=0.0, le=1.0)
     include_sources: bool = Field(default=True, description="Include source chunks in response")
@@ -87,11 +87,11 @@ class QueryResponse(BaseModel):
     answer: str
     session_id: str
     question: str
-    sources: List[SourceChunk] = []
+    sources: list[SourceChunk] = []
     model_used: str
     processing_time_ms: float
-    tokens_used: Optional[int] = None
-    confidence_score: Optional[float] = None
+    tokens_used: int | None = None
+    confidence_score: float | None = None
     timestamp: datetime = Field(default_factory=datetime.utcnow)
 
 
@@ -99,7 +99,7 @@ class ConversationTurn(BaseModel):
     role: str  # "human" or "assistant"
     content: str
     timestamp: datetime = Field(default_factory=datetime.utcnow)
-    sources: Optional[List[SourceChunk]] = None
+    sources: list[SourceChunk] | None = None
 
 
 class SessionResponse(BaseModel):
@@ -107,14 +107,14 @@ class SessionResponse(BaseModel):
     created_at: datetime
     last_active: datetime
     num_turns: int
-    history: List[ConversationTurn] = []
+    history: list[ConversationTurn] = []
 
 
 class HealthResponse(BaseModel):
     status: str
     version: str
     environment: str
-    components: Dict[str, Dict[str, Any]]
+    components: dict[str, dict[str, Any]]
     uptime_seconds: float
     timestamp: datetime = Field(default_factory=datetime.utcnow)
 
@@ -122,13 +122,13 @@ class HealthResponse(BaseModel):
 class SearchRequest(BaseModel):
     query: str = Field(..., min_length=2, max_length=500)
     top_k: int = Field(default=5, ge=1, le=20)
-    doc_ids: Optional[List[str]] = None
+    doc_ids: list[str] | None = None
     use_mmr: bool = True
 
 
 class SearchResponse(BaseModel):
     query: str
-    results: List[SourceChunk]
+    results: list[SourceChunk]
     total_found: int
     processing_time_ms: float
 

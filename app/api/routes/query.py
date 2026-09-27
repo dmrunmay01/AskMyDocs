@@ -2,20 +2,25 @@
 
 import json
 import time
-from typing import Optional
 
 import structlog
 from fastapi import APIRouter, Depends, Request
 from fastapi.responses import StreamingResponse
 
-from app.models.schemas import QueryRequest, QueryResponse, SearchRequest, SearchResponse, SourceChunk
+from app.models.schemas import (
+    QueryRequest,
+    QueryResponse,
+    SearchRequest,
+    SearchResponse,
+    SourceChunk,
+)
 from app.services.rag_pipeline import RAGPipeline
 from app.services.vector_store import VectorStoreService
 
 router = APIRouter()
 logger = structlog.get_logger(__name__)
 
-_pipeline: Optional[RAGPipeline] = None
+_pipeline: RAGPipeline | None = None
 
 
 async def get_pipeline(request: Request) -> RAGPipeline:
@@ -33,7 +38,7 @@ async def ask_question(
 ):
     """
     Ask a question against your indexed documents.
-    
+
     Uses RAG: semantic retrieval + LLM generation.
     Supports conversation history via session_id.
     """

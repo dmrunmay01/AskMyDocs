@@ -4,16 +4,14 @@ In-memory sessions with TTL expiry and conversation history.
 """
 
 import asyncio
-import time
 from datetime import datetime, timedelta
-from typing import Dict, List, Optional
 from uuid import uuid4
 
 import structlog
 
 from app.core.config import settings
 from app.core.exceptions import SessionNotFoundError
-from app.models.schemas import ConversationTurn, SessionResponse
+from app.models.schemas import ConversationTurn
 
 logger = structlog.get_logger(__name__)
 
@@ -22,9 +20,9 @@ class SessionService:
     """Thread-safe in-memory session store with TTL."""
 
     def __init__(self):
-        self._sessions: Dict[str, dict] = {}
+        self._sessions: dict[str, dict] = {}
         self._lock = asyncio.Lock()
-        self._cleanup_task: Optional[asyncio.Task] = None
+        self._cleanup_task: asyncio.Task | None = None
 
     async def start(self) -> None:
         self._cleanup_task = asyncio.create_task(self._cleanup_loop())
@@ -58,9 +56,7 @@ class SessionService:
 
     def add_turn(self, session_id: str, question: str, answer: str, sources: list = None) -> None:
         session = self.get_session(session_id)
-        session["history"].append(
-            ConversationTurn(role="human", content=question).dict()
-        )
+        session["history"].append(ConversationTurn(role="human", content=question).dict())
         session["history"].append(
             ConversationTurn(role="assistant", content=answer, sources=sources).dict()
         )
@@ -70,11 +66,11 @@ class SessionService:
         if len(session["history"]) > max_turns:
             session["history"] = session["history"][-max_turns:]
 
-    def get_history(self, session_id: str) -> List[dict]:
+    def get_history(self, session_id: str) -> list[dict]:
         session = self.get_session(session_id)
         return session["history"]
 
-    def get_or_create(self, session_id: Optional[str]) -> str:
+    def get_or_create(self, session_id: str | None) -> str:
         if session_id:
             try:
                 self.get_session(session_id)
@@ -89,7 +85,7 @@ class SessionService:
             return True
         return False
 
-    def list_sessions(self) -> List[dict]:
+    def list_sessions(self) -> list[dict]:
         return [
             {
                 "session_id": s["session_id"],
@@ -106,11 +102,7 @@ class SessionService:
             await asyncio.sleep(3600)  # every hour
             ttl = timedelta(hours=settings.SESSION_TTL_HOURS)
             now = datetime.utcnow()
-            expired = [
-                sid
-                for sid, s in self._sessions.items()
-                if now - s["last_active"] > ttl
-            ]
+            expired = [sid for sid, s in self._sessions.items() if now - s["last_active"] > ttl]
             for sid in expired:
                 del self._sessions[sid]
             if expired:
@@ -118,7 +110,7 @@ class SessionService:
 
 
 # Singleton
-_session_service: Optional[SessionService] = None
+_session_service: SessionService | None = None
 
 
 def get_session_service() -> SessionService:

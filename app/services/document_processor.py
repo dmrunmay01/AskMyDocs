@@ -7,10 +7,8 @@ Implements recursive character text splitter with smart chunking.
 import asyncio
 import csv
 import hashlib
-import io
 import re
 from pathlib import Path
-from typing import List, Optional, Tuple
 
 import structlog
 from langchain.schema import Document
@@ -47,8 +45,8 @@ class DocumentProcessor:
         file_path: Path,
         doc_id: str,
         filename: str,
-        extra_metadata: Optional[dict] = None,
-    ) -> Tuple[List[Document], dict]:
+        extra_metadata: dict | None = None,
+    ) -> tuple[list[Document], dict]:
         """
         Process a file and return LangChain Documents with metadata.
         Returns (chunks, file_metadata)
@@ -176,10 +174,10 @@ class DocumentProcessor:
     def _parse_markdown(self, file_path: Path, doc_id: str, filename: str):
         """Parse Markdown, splitting by headers."""
         text = file_path.read_text(encoding="utf-8", errors="replace")
-        
+
         # Split by headers
         sections = re.split(r"(^#{1,3} .+$)", text, flags=re.MULTILINE)
-        
+
         documents = []
         current_heading = "Overview"
         for chunk in sections:
@@ -218,11 +216,11 @@ class DocumentProcessor:
                 batch = rows[i : i + chunk_size]
                 text_parts = [f"CSV Data ({filename}) - Rows {i+1} to {i+len(batch)}:"]
                 text_parts.append(f"Columns: {', '.join(headers)}\n")
-                
+
                 for row_num, row in enumerate(batch, i + 1):
                     row_text = " | ".join(f"{k}: {v}" for k, v in row.items() if v)
                     text_parts.append(f"Row {row_num}: {row_text}")
-                
+
                 documents.append(
                     Document(
                         page_content="\n".join(text_parts),
@@ -247,14 +245,14 @@ class DocumentProcessor:
 
         html = file_path.read_text(encoding="utf-8", errors="replace")
         soup = BeautifulSoup(html, "html.parser")
-        
+
         # Remove scripts and styles
         for tag in soup(["script", "style", "nav", "footer"]):
             tag.decompose()
-        
+
         text = soup.get_text(separator="\n")
         text = self._clean_text(text)
-        
+
         documents = [
             Document(
                 page_content=text,
@@ -280,11 +278,11 @@ class DocumentProcessor:
 
     def _enrich_metadata(
         self,
-        chunks: List[Document],
+        chunks: list[Document],
         doc_id: str,
         filename: str,
         extra_metadata: dict,
-    ) -> List[Document]:
+    ) -> list[Document]:
         """Add chunk index and content hash to each chunk."""
         for i, chunk in enumerate(chunks):
             content_hash = hashlib.md5(chunk.page_content.encode()).hexdigest()[:8]
@@ -300,15 +298,15 @@ class DocumentProcessor:
             )
         return chunks
 
-    def _deduplicate_chunks(self, chunks: List[Document]) -> List[Document]:
+    def _deduplicate_chunks(self, chunks: list[Document]) -> list[Document]:
         """Remove near-duplicate chunks based on content hash."""
         seen_hashes = set()
         unique_chunks = []
-        
+
         for chunk in chunks:
             content_hash = hashlib.md5(chunk.page_content.strip().encode()).hexdigest()
-            if content_hash not in seen_hashes and len(chunk.page_content.strip()) > 20:
+            if content_hash not in seen_hashes:
                 seen_hashes.add(content_hash)
                 unique_chunks.append(chunk)
-        
+
         return unique_chunks

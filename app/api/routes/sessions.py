@@ -2,7 +2,7 @@
 
 from fastapi import APIRouter, HTTPException
 
-from app.models.schemas import SessionResponse, ConversationTurn
+from app.models.schemas import ConversationTurn, SessionResponse
 from app.services.session_service import get_session_service
 
 router = APIRouter()

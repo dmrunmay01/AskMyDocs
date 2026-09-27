@@ -5,7 +5,6 @@ All values can be overridden via environment variables.
 
 from functools import lru_cache
 from pathlib import Path
-from typing import List, Optional
 
 from pydantic import Field, validator
 from pydantic_settings import BaseSettings
@@ -21,7 +20,7 @@ class Settings(BaseSettings):
     # API
     API_HOST: str = Field(default="0.0.0.0", env="API_HOST")
     API_PORT: int = Field(default=8000, env="API_PORT")
-    ALLOWED_ORIGINS: List[str] = Field(
+    ALLOWED_ORIGINS: list[str] = Field(
         default=["http://localhost:3000", "http://localhost:8080", "*"],
         env="ALLOWED_ORIGINS",
     )
@@ -30,7 +29,7 @@ class Settings(BaseSettings):
     UPLOAD_DIR: Path = Field(default=Path("./storage/uploads"), env="UPLOAD_DIR")
     VECTOR_STORE_DIR: Path = Field(default=Path("./storage/vectorstore"), env="VECTOR_STORE_DIR")
     MAX_UPLOAD_SIZE_MB: int = Field(default=50, env="MAX_UPLOAD_SIZE_MB")
-    ALLOWED_EXTENSIONS: List[str] = [".pdf", ".txt", ".docx", ".md", ".csv", ".html"]
+    ALLOWED_EXTENSIONS: list[str] = [".pdf", ".txt", ".docx", ".md", ".csv", ".html"]
 
     # Embeddings
     EMBEDDING_MODEL: str = Field(
@@ -48,7 +47,7 @@ class Settings(BaseSettings):
     # Text Chunking
     CHUNK_SIZE: int = Field(default=512, env="CHUNK_SIZE")
     CHUNK_OVERLAP: int = Field(default=64, env="CHUNK_OVERLAP")
-    CHUNK_SEPARATORS: List[str] = ["\n\n", "\n", ". ", " ", ""]
+    CHUNK_SEPARATORS: list[str] = ["\n\n", "\n", ". ", " ", ""]
 
     # LLM (Ollama)
     OLLAMA_BASE_URL: str = Field(default="http://ollama:11434", env="OLLAMA_BASE_URL")
@@ -90,7 +89,7 @@ class Settings(BaseSettings):
         case_sensitive = True
 
 
-@lru_cache()
+@lru_cache
 def get_settings() -> Settings:
     return Settings()
 
