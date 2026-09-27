@@ -1,6 +1,6 @@
 # ⚡ AskMyDocs — RAG-Powered Document Q&A
 
-> Ask questions about your documents using a local LLM, retrieve relevant context with FAISS, and receive grounded answers with source citations.
+> Ask questions about your documents using a local LLM, retrieve relevant context with Chroma, and receive grounded answers with source citations.
 
 [![Python](https://img.shields.io/badge/python-3.11-blue.svg)](https://python.org)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.111-green.svg)](https://fastapi.tiangolo.com)
@@ -48,7 +48,7 @@ AskMyDocs provides a browser-based interface for uploading documents, indexing t
 │  │  (chunking) │  └──────┬──────────────┬────────────┘ │
 │  └──────┬──────┘         │              │              │
 │         │         ┌──────▼──────┐  ┌───▼───────────┐ │
-│  ┌──────▼──────┐  │    FAISS    │  │  LLM Service  │ │
+│  ┌──────▼──────┐  │    Chroma    │  │  LLM Service  │ │
 │  │ HuggingFace │  │ Vector Store│  │    Ollama     │ │
 │  │  Embeddings │  │   + MMR     │  │ / HF fallback │ │
 │  └─────────────┘  └─────────────┘  └───────────────┘ │
@@ -59,7 +59,7 @@ AskMyDocs provides a browser-based interface for uploading documents, indexing t
 
 1. File upload → `DocumentProcessor` parses and splits the document into chunks.
 2. Chunks are embedded using `sentence-transformers/all-MiniLM-L6-v2`.
-3. Embeddings and metadata are stored in a FAISS index.
+3. Embeddings and metadata are stored in a Chroma index.
 4. A user query is embedded and relevant chunks are retrieved using similarity search, with optional MMR diversity.
 5. Retrieved context and conversation history are passed to the local Ollama LLM.
 6. The generated answer and retrieved source information are returned to the frontend.
@@ -72,7 +72,7 @@ AskMyDocs provides a browser-based interface for uploading documents, indexing t
 |---|---|
 | **Document Formats** | PDF, DOCX, TXT, Markdown, CSV, HTML |
 | **Embeddings** | `sentence-transformers/all-MiniLM-L6-v2` |
-| **Vector Store** | FAISS |
+| **Vector Store** | Chroma |
 | **Retrieval** | Similarity search with optional MMR diversity |
 | **LLM** | Ollama local models with configurable model name |
 | **Chunking** | Recursive character splitting |
@@ -132,7 +132,7 @@ Docker Compose uses persistent volumes for uploaded documents, vector data, mode
 
 ```bash
 # Clone the repository
-git clone <YOUR_GITHUB_REPOSITORY_URL>
+git clone https://github.com/dmrunmay01/AskMyDocs.git
 cd AskMyDocs
 
 # Create a virtual environment
@@ -478,7 +478,7 @@ AskMyDocs/
 │   │
 │   ├── services/
 │   │   ├── document_processor.py  # Document parsing + chunking
-│   │   ├── vector_store.py        # FAISS operations + MMR
+│   │   ├── vector_store.py        # Chroma operations + MMR
 │   │   ├── llm_service.py         # Ollama / HuggingFace LLM
 │   │   ├── rag_pipeline.py        # RAG orchestration
 │   │   └── session_service.py     # Conversation history + TTL
@@ -523,7 +523,7 @@ AskMyDocs/
 | Backend | FastAPI, Python |
 | RAG Framework | LangChain |
 | Embeddings | Hugging Face Sentence Transformers |
-| Vector Search | FAISS |
+| Vector Search | Chroma |
 | LLM Runtime | Ollama |
 | Model Support | Local Ollama models / Hugging Face fallback |
 | Containerization | Docker, Docker Compose |
@@ -533,4 +533,4 @@ AskMyDocs/
 
 ---
 
-**Built with:** FastAPI · LangChain · FAISS · HuggingFace · Ollama · Docker · Prometheus · Grafana
+**Built with:** FastAPI · LangChain · Chroma · HuggingFace · Ollama · Docker · Prometheus · Grafana
